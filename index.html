@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<title>Đồ thị hàm số bậc 2</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+  :root{ --left-w:340px; }
+  body{ font-family: "Segoe UI", Tahoma, sans-serif; margin:0; padding:18px; background:linear-gradient(135deg,#e8f2ff,#fefefa); color:#263238; }
+  h1{ text-align:center; margin:0 0 12px; color:#1565c0; font-weight:800 }
+  #layout{ display:flex; gap:16px; justify-content:center; align-items:flex-start }
+  #leftCol{ width:var(--left-w); background:#fff; border:1px solid #e6ecf2; border-radius:12px; padding:14px; box-shadow:0 6px 14px rgba(0,0,0,.06); display:flex; flex-direction:column; gap:10px; }
+  #rightCol{ display:flex; flex-direction:column; align-items:center }
+  label{ font-weight:700; font-size:.95rem }
+  input[type="text"], input[type="number"]{ padding:8px; border-radius:8px; border:1px solid #cbd5e1; font-size:0.95rem; }
+  .wide{ width:100% }
+  .small{ font-size:.86rem; color:#455a64 }
+  .row{ display:flex; gap:8px; align-items:center; flex-wrap:wrap }
+  button{ padding:7px 12px; border-radius:8px; border:none; background:#4caf50; color:#fff; cursor:pointer; }
+  button.secondary{ background:#0288d1 } button.warn{ background:#f57c00 } button:hover{ filter:brightness(.95); }
+  #info{ font-size:.95rem; line-height:1.45; background:#fafafa; padding:8px; border-radius:8px; border:1px dashed #e0e0e0 }
+  #funcList{ font-size:.92rem; white-space:pre-wrap; background:#fff8e1; padding:8px; border-radius:8px; border:1px solid #ffe0b2; min-height:36px }
+  canvas{ width:720px; height:520px; border-radius:12px; background:#2e7d32; box-shadow:0 6px 18px rgba(0,0,0,.12); cursor:crosshair; display:block; }
+  .hint{ font-size:.85rem; color:#546e7a }
+</style>
+
+<!-- MathJax for LaTeX -->
+<script>
+  window.MathJax = {
+    tex: { inlineMath: [['$','$'],['\\(','\\)']], displayMath: [['$$','$$']] },
+    svg: { fontCache: 'global' }
+  };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
+</head>
+
+<body>
+  <h1>VẼ ĐỒ THỊ HÀM SỐ BẬC 2 VÀ TỊNH TIẾN ĐỒ THỊ</h1>
+<div style="text-align:center; font-size:1.3rem; margin:24px 0; color:#fbc02d;">
+  <b><i>“Trong toán học, điều quan trọng không phải là biết đáp số, mà là hiểu con đường đi tới đáp số.”</i></b>
+<div style="text-align:right; font-size:1rem; color:#0d47a1; margin-right:20px;">
+  <i>(George Pólya: 1887–1985)</i></div>
+
+</div>  <div id="layout">
+    <aside id="leftCol">
+      <div>
+        <label>Bạn nhập hàm số bậc hai cần vẽ :</label><br>
+        <input id="funcInput" class="wide" type="text" value="y = x^2 - 4x " />
+      </div>
+
+      <div id="info">Nhập hàm bậc 2 (vd: $y=x^2-4x+3$). Hệ thống sẽ vẽ và hiển thị toạ độ dạng phân số/nguyên.</div>
+
+      <div>
+        <label>Nhập đồ thị cần tịnh tiến:</label><br>
+        <input id="extraInput" class="wide" type="text" placeholder="vd: y = -2x^2 + 3x - 1" />
+        <div class="row" style="margin-top:6px;">
+          <button id="extraDrawBtn">Vẽ đồ thị</button>
+          <button id="extraAddBtn" class="secondary">Thêm đồ thị</button>
+          <button id="clearAddedBtn" class="warn">Xóa đồ thị thêm</button>
+        </div>
+        <div class="small">Bấm "thêm đồ thị" và đưa chuột lên đồ thị để kéo rê (tịnh tiến).</div>
+      </div>
+
+      <div>
+        <label>Danh sách đồ thị đã thêm (Đưa chuột lên đồ thị đã thêm vào để kéo rê):</label>
+        <div id="funcList">(chưa có đồ thị nào)</div>
+      </div>
+
+      <div>
+        <label>Giới hạn trục (đặt xong tự cập nhật):</label>
+        <div class="row">
+          <div>x từ <input id="xmin" type="number" value="-10" style="width:90px"> đến <input id="xmax" type="number" value="10" style="width:90px"></div>
+        </div>
+        <div class="row" style="margin-top:6px;">
+          <div>y từ <input id="ymin" type="number" value="-10" style="width:90px"> đến <input id="ymax" type="number" value="10" style="width:90px"></div>
+        </div>
+        <div class="hint">Click lên đồ thị → kéo để tịnh tiến đồ thị đã thêm; công thức cập nhật vào ô "Đồ thị khác".</div>
+      </div>
+    </aside>
+
+    <section id="rightCol">
+      <canvas id="board" width="720" height="520"></canvas>
+    </section>
+  </div>
+
+<script>
+/* ---------------- helpers: fractions & parsing ---------------- */
+function gcd(a,b){ a=Math.abs(a); b=Math.abs(b); if(!b) return a; while(b){ let t=a%b; a=b; b=t; } return a; }
+function floatToFrac(x,maxDen=1000){
+  if(!isFinite(x)) return [0,1];
+  const sign = x<0?-1:1; x = Math.abs(x);
+  if (Math.abs(x - Math.round(x)) < 1e-12) return [sign*Math.round(x), 1];
+  let best = {p:0,q:1,err:1e9};
+  for(let q=1;q<=maxDen;q++){
+    let p = Math.round(x*q);
+    let err = Math.abs(x - p/q);
+    if (err < best.err){ best={p,q,err}; if(err < 1e-14) break; }
+  }
+  if (best.q===0) return [0,1];
+  let g = gcd(best.p, best.q);
+  return [sign*(best.p/g), best.q/g];
+}
+function fracToStr(p,q){
+  if (q===1) return `${p}`;
+  if (q<0){ p=-p; q=-q; }
+  return `${p}/${q}`;
+}
+function valToFracStr(v){
+  if(!isFinite(v)) return "∞";
+  let [p,q] = floatToFrac(v,1000);
+  return fracToStr(p,q);
+}
+/* LaTeX-friendly fraction: -\dfrac{p}{q} (q>0) */
+function valToFracLatex(v){
+  if(!isFinite(v)) return "\\infty";
+  let [p,q] = floatToFrac(v,1000);
+  if (q===1) return `${p}`;
+  if (q<0){ p=-p; q=-q; }
+  const sign = p<0 ? "-" : "";
+  p = Math.abs(p);
+  return `${sign}\\dfrac{${p}}{${q}}`;
+}
+
+/* text & LaTeX formatting for y = ax^2 + bx + c */
+function formatFuncString(a,b,c){
+  function term(coef,power){
+    if (Math.abs(coef) < 1e-12) return "";
+    let sign = coef>0? "+":"-";
+    let absC = Math.abs(coef);
+    let coefStr = "";
+    if (power===0) coefStr = (Math.abs(absC-Math.round(absC))<1e-12)? `${Math.round(absC)}`: `${absC}`;
+    else {
+      if (Math.abs(absC - 1) < 1e-12) coefStr = ""; else coefStr = (Math.abs(absC-Math.round(absC))<1e-12)? `${Math.round(absC)}`: `${absC}`;
+    }
+    if (power===2) return sign + coefStr + "x^2";
+    if (power===1) return sign + coefStr + "x";
+    return sign + coefStr;
+  }
+  let s = "y = " + term(a,2) + term(b,1) + term(c,0);
+  s = s.replace("y = +","y = ");
+  if (s==="y = ") s="y = 0";
+  return s.replaceAll("^2","²"); // chỉ để hiển thị ở ô input/list cho đẹp
+}
+function formatFuncLatex(a,b,c){
+  function term(coef,power){
+    if (Math.abs(coef) < 1e-12) return "";
+    const sign = coef>0? "+":"-";
+    let absC = Math.abs(coef);
+    let coefStr = "";
+    if (power===0) coefStr = (Math.abs(absC-Math.round(absC))<1e-12)? `${Math.round(absC)}`: `${absC}`;
+    else coefStr = (Math.abs(absC-1)<1e-12)? "": `${(Math.abs(absC-Math.round(absC))<1e-12)? Math.round(absC):absC}`;
+    if (power===2) return `${sign}${coefStr}x^2`;
+    if (power===1) return `${sign}${coefStr}x`;
+    return `${sign}${coefStr}`;
+  }
+  let s = "y = " + term(a,2) + term(b,1) + term(c,0);
+  s = s.replace("y = +","y = ");
+  if (s==="y = ") s="y = 0";
+  return s;
+}
+
+function parsePolynomial(str){
+  if(!str) return {a:0,b:0,c:0};
+  str = str.toString().trim().replace(/\s+/g,'').replace(/^y=/i,'');
+  str = str.replace(/(^|[+\-])x\^2/g, '$11x^2');
+  str = str.replace(/(^|[+\-])x(?![\^0-9a-zA-Z])/g, '$11x');
+
+  let a=0,b=0,c=0;
+  let terms = str.match(/[+\-]?\d*\.?\d*x\^2|[+\-]?\d*\.?\d*x|[+\-]?\d+\.?\d*/g);
+  if (terms){
+    terms.forEach(t=>{
+      if (t.includes('x^2')) a += parseFloat(t.replace('x^2','')) || 0;
+      else if (t.includes('x')) b += parseFloat(t.replace('x','')) || 0;
+      else c += parseFloat(t) || 0;
+    });
+  }
+  return {a,b,c};
+}
+function isPerfectSquareInt(n){
+  if (!isFinite(n) || n < 0) return false;
+  const r = Math.round(Math.sqrt(n));
+  return r*r === Math.round(n);
+}
+
+/* ---------------- canvas & square view ---------------- */
+const canvas = document.getElementById('board');
+const ctx = canvas.getContext('2d');
+
+function fixCanvasResolution(){
+  const cssW = canvas.getAttribute('width') || 720;
+  const cssH = canvas.getAttribute('height') || 520;
+  const ratio = window.devicePixelRatio || 1;
+  canvas.style.width = cssW + 'px';
+  canvas.style.height = cssH + 'px';
+  canvas.width = Math.round(cssW * ratio);
+  canvas.height = Math.round(cssH * ratio);
+  ctx.setTransform(ratio,0,0,ratio,0,0);
+}
+fixCanvasResolution();
+window.addEventListener('resize', ()=>{ fixCanvasResolution(); redrawAll(); });
+
+function getRect(){ return canvas.getBoundingClientRect(); }
+
+/* compute square view inside canvas and expand world intervals to square world */
+function computeView(){
+  const r = getRect();
+  const cssW = r.width, cssH = r.height;
+  const side = Math.min(cssW, cssH);
+  const offsetX = (cssW - side)/2;
+  const offsetY = (cssH - side)/2;
+  let rxmin = parseFloat(document.getElementById('xmin').value);
+  let rxmax = parseFloat(document.getElementById('xmax').value);
+  let rymin = parseFloat(document.getElementById('ymin').value);
+  let rymax = parseFloat(document.getElementById('ymax').value);
+  if (!(rxmax > rxmin)){ rxmax = rxmin + 1; document.getElementById('xmax').value = rxmax; }
+  if (!(rymax > rymin)){ rymax = rymin + 1; document.getElementById('ymax').value = rymax; }
+  const worldW = rxmax - rxmin;
+  const worldH = rymax - rymin;
+  const worldSide = Math.max(worldW, worldH);
+  const scale = side / worldSide; // px per unit
+  const extraW = (worldSide - worldW)/2;
+  const extraH = (worldSide - worldH)/2;
+  const xminv = rxmin - extraW;
+  const xmaxv = rxmax + extraW;
+  const yminv = rymin - extraH;
+  const ymaxv = rymax + extraH;
+  return { offsetX, offsetY, side, scale, xminv, xmaxv, yminv, ymaxv, cssW, cssH };
+}
+
+function toCanvasX_world(x, view){ return view.offsetX + (x - view.xminv) * view.scale; }
+function toCanvasY_world(y, view){ return view.offsetY + (view.ymaxv - y) * view.scale; }
+function toWorld(mx,my, view){ return { x: view.xminv + (mx - view.offsetX) / view.scale, y: view.ymaxv - (my - view.offsetY) / view.scale }; }
+
+/* ---------- drawing ---------- */
+function drawBoard(){
+  const view = computeView();
+  const r = getRect();
+  ctx.clearRect(0,0,r.width,r.height);
+
+  // nền bảng xanh
+  ctx.fillStyle = '#004d40'; 
+  ctx.fillRect(0,0,r.width,r.height);
+
+  // lưới
+  ctx.strokeStyle = 'rgba(255,255,255,0.18)'; 
+  ctx.lineWidth = 1;
+  const xstart = Math.ceil(view.xminv - 1e-9), xend = Math.floor(view.xmaxv + 1e-9);
+  for (let xi = xstart; xi <= xend; xi++){
+    const X = toCanvasX_world(xi, view);
+    ctx.beginPath(); ctx.moveTo(X, view.offsetY); ctx.lineTo(X, view.offsetY + view.side); ctx.stroke();
+  }
+  const ystart = Math.ceil(view.yminv - 1e-9), yend = Math.floor(view.ymaxv + 1e-9);
+  for (let yi = ystart; yi <= yend; yi++){
+    const Y = toCanvasY_world(yi, view);
+    ctx.beginPath(); ctx.moveTo(view.offsetX, Y); ctx.lineTo(view.offsetX + view.side, Y); ctx.stroke();
+  }
+
+  // trục
+  ctx.strokeStyle = '#ffffff'; 
+  ctx.lineWidth = 2;
+  if (view.yminv <= 0 && view.ymaxv >= 0){
+    const Y0 = toCanvasY_world(0, view);
+    ctx.beginPath(); ctx.moveTo(view.offsetX, Y0); ctx.lineTo(view.offsetX + view.side, Y0); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(view.offsetX + view.side - 14, Y0 - 6); ctx.lineTo(view.offsetX + view.side, Y0); ctx.lineTo(view.offsetX + view.side - 14, Y0 + 6); ctx.stroke();
+    ctx.fillStyle = '#fff'; ctx.font = '14px Segoe UI'; ctx.fillText('x', view.offsetX + view.side - 36, Y0 - 10);
+  }
+  if (view.xminv <= 0 && view.xmaxv >= 0){
+    const X0 = toCanvasX_world(0, view);
+    ctx.beginPath(); ctx.moveTo(X0, view.offsetY); ctx.lineTo(X0, view.offsetY + view.side); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(X0 - 6, view.offsetY + 14); ctx.lineTo(X0, view.offsetY); ctx.lineTo(X0 + 6, view.offsetY + 14); ctx.stroke();
+    ctx.fillStyle = '#fff'; ctx.font = '14px Segoe UI'; ctx.fillText('y', X0 + 8, view.offsetY + 20);
+  }
+  if (view.xminv <= 0 && view.xmaxv >= 0 && view.yminv <= 0 && view.ymaxv >= 0){
+    ctx.fillText('O', toCanvasX_world(0, view) - 18, toCanvasY_world(0, view) + 18);
+  }
+  return view;
+}
+
+function drawQuadraticWithValues(f, color, view, options = {}){
+  // vẽ đúng theo hệ số f
+  ctx.strokeStyle = color; ctx.lineWidth = options.highlight?3:2;
+  ctx.beginPath();
+  const steps = Math.max(200, Math.round(view.side));
+  for (let i=0;i<=steps;i++){
+    const px = view.offsetX + (i/steps) * view.side;
+    const worldx = view.xminv + (px - view.offsetX) / view.scale;
+    const y = f.a*worldx*worldx + f.b*worldx + f.c;
+    const py = toCanvasY_world(y, view);
+    if (i===0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+  }
+  ctx.stroke();
+
+  // các giá trị đặc biệt
+  const delta = f.b*f.b - 4*f.a*f.c;
+  const xv = -f.b/(2*f.a);
+  const yv = -delta/(4*f.a);
+
+  // nét đứt chiếu
+  ctx.setLineDash([6,6]); ctx.strokeStyle = '#ffd54f'; ctx.lineWidth = 1.6;
+  let targetY = (view.yminv <= 0 && view.ymaxv >= 0) ? 0 : (yv > 0 ? view.ymaxv : view.yminv);
+  ctx.beginPath(); ctx.moveTo(toCanvasX_world(xv, view), toCanvasY_world(yv, view));
+  ctx.lineTo(toCanvasX_world(xv, view), toCanvasY_world(targetY, view)); ctx.stroke();
+  let targetX = (view.xminv <= 0 && view.xmaxv >= 0) ? 0 : (xv > 0 ? view.xmaxv : view.xminv);
+  ctx.beginPath(); ctx.moveTo(toCanvasX_world(xv, view), toCanvasY_world(yv, view));
+  ctx.lineTo(toCanvasX_world(targetX, view), toCanvasY_world(yv, view)); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // vẽ điểm & nhãn tiện dụng
+  function drawPointNumAt(x,y,label){
+    const cx = toCanvasX_world(x, view), cy = toCanvasY_world(y, view);
+    ctx.fillStyle = 'red'; ctx.beginPath(); ctx.arc(cx, cy, 3, 0, 2*Math.PI); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = '13px Segoe UI';
+    ctx.fillText(label, cx + 8, cy - 8);
+  }
+
+  // đỉnh I
+  const cx = toCanvasX_world(xv, view), cy = toCanvasY_world(yv, view);
+  ctx.fillStyle = 'red';
+  ctx.beginPath(); ctx.arc(cx, cy, 3, 0, 2*Math.PI); ctx.fill();
+
+  // chiếu xuống Ox, sang Oy
+  ctx.setLineDash([6,6]); ctx.strokeStyle = '#ffd54f'; ctx.lineWidth = 1.6;
+  const Y0 = toCanvasY_world(0, view);
+  ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx, Y0); ctx.stroke();
+  const X0 = toCanvasX_world(0, view);
+  ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(X0, cy); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // nhãn tọa độ đỉnh trên trục
+  ctx.fillStyle = '#fff'; ctx.font = '13px Segoe UI';
+  ctx.fillText(valToFracStr(xv), cx + 6, Y0 - 6);
+  ctx.fillText(valToFracStr(yv), X0 + 6, cy - 6);
+
+  // giao Oy tại (0,c)
+  drawPointNumAt(0, f.c, `${valToFracStr(f.c)}`);
+
+  // Giao Ox:
+  // - Nếu Δ < 0: không có (không vẽ).
+  // - Nếu Δ = 0: vẽ tiếp xúc tại x = xv.
+  // - Nếu Δ > 0 và là số chính phương: vẽ hai nghiệm.
+  // - Nếu Δ > 0 nhưng KHÔNG là số chính phương: KHÔNG vẽ (theo yêu cầu).
+  const EPS=1e-12;
+  if (delta > EPS){
+    const dr = Math.round(delta);
+    const isInt = Math.abs(delta - dr) < 1e-9;
+    if (isInt && isPerfectSquareInt(dr)){
+      const s = Math.round(Math.sqrt(dr));
+      const x1 = (-f.b - s) / (2*f.a);
+      const x2 = (-f.b + s) / (2*f.a);
+      drawPointNumAt(x1, 0, `${valToFracStr(x1)}`);
+      drawPointNumAt(x2, 0, `${valToFracStr(x2)}`);
+    }
+  } else if (Math.abs(delta) <= EPS){
+    drawPointNumAt(xv, 0, `${valToFracStr(xv)}`);
+  }
+}
+
+/* ---------------- UI state & flow ---------------- */
+const funcInput = document.getElementById('funcInput');
+const extraInput = document.getElementById('extraInput');
+const infoBox = document.getElementById('info');
+const funcListBox = document.getElementById('funcList');
+const extraDrawBtn = document.getElementById('extraDrawBtn');
+const extraAddBtn = document.getElementById('extraAddBtn');
+const clearAddedBtn = document.getElementById('clearAddedBtn');
+
+let previewFunc = null;
+let extraPreview = null;
+let functions = []; // stored functions
+const palette = ['#ffeb3b','#00e5ff','#ff8a65','#f48fb1','#b39ddb','#a5d6a7'];
+let nextId = 1;
+
+/* render LaTeX into #info */
+function setInfoLatex(html){
+  infoBox.innerHTML = html;
+  if (window.MathJax && MathJax.typesetPromise){
+    MathJax.typesetPromise([infoBox]);
+  }
+}
+function buildInfoLatex(a,b,c){
+  if (Math.abs(a) < 1e-12) return "Không phải hàm bậc 2 (a = 0).";
+  const delta = b*b - 4*a*c;
+  const xv = -b/(2*a), yv = -delta/(4*a);
+  const conc = a>0? "Bề lõm quay lên (a>0)" : "Bề lõm quay xuống (a<0)";
+
+  // tiêu đề hàm số
+  const fs = formatFuncLatex(a,b,c);
+
+  // phần giao Ox theo yêu cầu
+  let oxLine = "";
+  const dr = Math.round(delta);
+  const isInt = Math.abs(delta - dr) < 1e-9;
+  if (delta < -1e-12){
+    oxLine = `Không cắt $Ox$ ($\\Delta<0$).`;
+  } else if (Math.abs(delta) <= 1e-12){
+    oxLine = `Tiếp xúc $Ox$ tại $x = ${valToFracLatex(xv)}$.`;
+  } else if (isInt && isPerfectSquareInt(dr)){
+    const s = Math.round(Math.sqrt(dr));
+    const x1 = (-b - s) / (2*a), x2 = (-b + s) / (2*a);
+    oxLine = `Giao $Ox$ tại $x = ${valToFracLatex(x1)}$ và $x = ${valToFracLatex(x2)}$.`;
+  } else {
+    // Δ > 0 nhưng không chính phương → KHÔNG hiển thị dòng giao Ox
+    oxLine = "";
+  }
+
+  const oyLine = `Giao $Oy$ tại $(0,\\;${valToFracLatex(c)})$.`;
+
+  // ghép nội dung (ẩn dòng Ox nếu rỗng)
+  const lines = [
+    `$${fs}$`,
+    `Đỉnh $I\\big(${valToFracLatex(xv)},\\;${valToFracLatex(yv)}\\big)$`,
+    `Trục đối xứng $x = ${valToFracLatex(-b/(2*a))}$`,
+    conc,
+    oxLine,
+    oyLine
+  ].filter(Boolean);
+
+  return lines.join("<br>");
+}
+
+function updatePreview(){
+  previewFunc = parsePolynomial(funcInput.value);
+  setInfoLatex(buildInfoLatex(previewFunc.a, previewFunc.b, previewFunc.c));
+  redrawAll();
+}
+
+function redrawAll(){
+  const view = drawBoard();
+  // draw added functions
+  for (let i=0;i<functions.length;i++){
+    drawQuadraticWithValues(functions[i], functions[i].color, view, {highlight: functions[i].selected});
+  }
+  // preview main
+  if (previewFunc && Math.abs(previewFunc.a) > 1e-12){
+    ctx.save(); ctx.globalAlpha = 0.85; drawQuadraticWithValues(previewFunc, '#ffffff80', view); ctx.restore();
+  }
+  // extra preview dashed
+  if (extraPreview && Math.abs(extraPreview.a) > 1e-12){
+    ctx.save(); ctx.setLineDash([6,4]); drawQuadraticWithValues(extraPreview, '#00e5ff80', view); ctx.setLineDash([]); ctx.restore();
+  }
+  // update list text
+  if (functions.length === 0) funcListBox.textContent = "(chưa có đồ thị nào)";
+  else {
+    funcListBox.textContent = functions.map((f,i)=> (f.selected? "● ":"  ") + `${i+1}. ${formatFuncString(f.a,f.b,f.c)}`).join("\n");
+  }
+}
+
+/* extra draw/add */
+extraDrawBtn.addEventListener('click', ()=>{
+  const f = parsePolynomial(extraInput.value);
+  extraPreview = f; // preview only
+  updatePreview();
+});
+extraAddBtn.addEventListener('click', ()=>{
+  const f = parsePolynomial(extraInput.value);
+  if (Math.abs(f.a) < 1e-12){ alert('Không phải hàm bậc 2 (a = 0).'); return; }
+  functions.push({a:f.a,b:f.b,c:f.c,color: palette[(functions.length)%palette.length], id: nextId++, selected:false});
+  extraPreview = null;
+  updatePreview();
+});
+clearAddedBtn.addEventListener('click', ()=>{
+  if (!functions.length && !extraInput.value) return;
+
+  // Xóa toàn bộ đồ thị đã thêm
+  functions = [];
+
+  // Xóa ô nhập đồ thị cần tịnh tiến
+  extraInput.value = "";
+
+  // Xóa preview đồ thị phụ
+  extraPreview = null;
+
+  // Bỏ chọn nếu đang chọn đồ thị nào
+  dragging = null;
+
+  // Vẽ lại
+  updatePreview();
+});
+
+funcInput.addEventListener('input', updatePreview);
+['xmin','xmax','ymin','ymax'].forEach(id=> document.getElementById(id).addEventListener('input', updatePreview));
+
+updatePreview(); // initial draw
+
+/* ---------- dragging to translate added functions ---------- */
+let dragging = null; // {index, startWorldX, startWorldY, orig}
+const pixelTolerance = 8;
+
+canvas.addEventListener('mousedown', (ev)=>{
+  const rect = getRect();
+  const mx = ev.clientX - rect.left, my = ev.clientY - rect.top;
+  const view = computeView();
+  const world = toWorld(mx,my, view);
+
+  // find nearest added function by vertical pixel distance at this x
+  let best = {idx:-1, dist: Infinity};
+  for (let i=0;i<functions.length;i++){
+    const f = functions[i];
+    const ycalc = f.a*world.x*world.x + f.b*world.x + f.c;
+    const py = toCanvasY_world(ycalc, view);
+    const dy = Math.abs(py - my);
+    if (dy < best.dist && dy <= pixelTolerance) best = {idx:i, dist:dy};
+  }
+  if (best.idx !== -1){
+    functions.forEach(ff=>ff.selected = false);
+    functions[best.idx].selected = true;
+    dragging = { index: best.idx, startX: world.x, startY: world.y, orig: {...functions[best.idx]} };
+    extraInput.value = formatFuncString(functions[best.idx].a, functions[best.idx].b, functions[best.idx].c);
+    redrawAll();
+    ev.preventDefault();
+  } else {
+    functions.forEach(ff=>ff.selected = false);
+    dragging = null;
+    redrawAll();
+  }
+});
+
+window.addEventListener('mousemove', (ev)=>{
+  if (!dragging) return;
+  const rect = getRect();
+  const mx = ev.clientX - rect.left, my = ev.clientY - rect.top;
+  const view = computeView();
+  const world = toWorld(mx,my, view);
+  const h = world.x - dragging.startX;
+  const v = world.y - dragging.startY;
+  const o = dragging.orig;
+  const a = o.a;
+  const b_new = o.b - 2*a*h;
+  const c_new = a*h*h - o.b*h + o.c + v;
+  functions[dragging.index].a = a;
+  functions[dragging.index].b = b_new;
+  functions[dragging.index].c = c_new;
+  extraInput.value = formatFuncString(a,b_new,c_new);
+  redrawAll();
+});
+
+window.addEventListener('mouseup', ()=>{
+  if (dragging){ dragging = null; redrawAll(); }
+});
+
+/* double-click list to remove selected */
+funcListBox.addEventListener('dblclick', ()=>{
+  const selIdx = functions.findIndex(f=>f.selected);
+  if (selIdx >= 0){
+    if (confirm(`Xóa đồ thị #${selIdx+1}?`)){ functions.splice(selIdx,1); redrawAll(); }
+  } else alert('Chọn đồ thị bằng cách click lên đồ thị trên canvas trước khi xóa (sau đó double-click danh sách để xóa).');
+});
+</script>
+</body>
+</html>
