@@ -23,6 +23,30 @@
   canvas{ width:720px; height:520px; border-radius:12px; background:#2e7d32; box-shadow:0 6px 18px rgba(0,0,0,.12); cursor:crosshair; display:block; }
   .hint{ font-size:.85rem; color:#546e7a }
 
+@media (max-width: 768px){
+  #layout{
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  #leftCol{
+    width: 100%;
+  }
+
+  #rightCol{
+    width: 100%;
+  }
+
+  canvas{
+    width: 100%;
+    height: auto;
+  }
+}
+
+
+
+
+  
  footer {
       position: fixed;
       bottom: 0;
@@ -594,4 +618,5 @@ funcListBox.addEventListener('dblclick', ()=>{
 
 </body>
 </html>
+
 
