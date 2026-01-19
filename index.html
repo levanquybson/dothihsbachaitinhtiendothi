@@ -22,6 +22,25 @@
   #funcList{ font-size:.92rem; white-space:pre-wrap; background:#fff8e1; padding:8px; border-radius:8px; border:1px solid #ffe0b2; min-height:36px }
   canvas{ width:720px; height:520px; border-radius:12px; background:#2e7d32; box-shadow:0 6px 18px rgba(0,0,0,.12); cursor:crosshair; display:block; }
   .hint{ font-size:.85rem; color:#546e7a }
+
+ footer {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      text-align: center;
+      padding: 10px;
+      font-size: 14px;
+      background: #f0f0f0;
+      color: #333;
+      border-top: 1px solid #ccc;
+
+      /* chống copy / bôi đen */
+      user-select: none;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+    }
+
 </style>
 
 <!-- MathJax for LaTeX -->
@@ -546,5 +565,33 @@ funcListBox.addEventListener('dblclick', ()=>{
   } else alert('Chọn đồ thị bằng cách click lên đồ thị trên canvas trước khi xóa (sau đó double-click danh sách để xóa).');
 });
 </script>
+  </script>
+
+<meta charset="UTF-8">
+<footer id="copyright"></footer>
+
+<script>
+  // Base64 đúng (chữ Quý)
+  const b64Copyright = "TMOqIFbEg24gUXXDvSwgVEhQVCBCw6xuaCBTxqFuLCBRdeG6o25nIE5nw6NpK0dQVA==";
+
+  const bytes = Uint8Array.from(atob(b64Copyright), c => c.charCodeAt(0));
+  const text  = new TextDecoder("utf-8").decode(bytes);
+
+  // Kiểm tra nhanh trên console: phải in đúng "© 2025 Lê Văn Quý+GPT. All rights reserved."
+  console.log(text);
+
+  document.getElementById("copyright").textContent = text;
+
+  // (tuỳ chọn) chặn chuột phải & Ctrl+C như bạn đã làm
+  document.addEventListener("contextmenu", e => e.preventDefault());
+  document.addEventListener("keydown", e => {
+    if (e.ctrlKey && e.key.toLowerCase() === "c") {
+      e.preventDefault();
+      alert("!");
+    }
+  });
+</script>
+
 </body>
 </html>
+
