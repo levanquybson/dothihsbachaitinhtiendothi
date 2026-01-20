@@ -5,29 +5,89 @@
 <title>Đồ thị hàm số bậc 2</title>
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <style>
-  :root{ --left-w:340px; }
+ 
   body{ font-family: "Segoe UI", Tahoma, sans-serif; margin:0; padding:18px; background:linear-gradient(135deg,#e8f2ff,#fefefa); color:#263238; }
   h1{ text-align:center; margin:0 0 12px; color:#1565c0; font-weight:800 }
+/* =========================
+   LAYOUT CHỐT CUỐI
+   ========================= */
+
+/* =========================
+   LAYOUT – CANH GIỮA THẬT
+   ========================= */
+:root{
+  --left-w: 500px;      /* cột trái */
+  --right-w: 900px;    /* cột canvas – MẤU CHỐT */
+  --gap: 14px;
+}
+
 #layout{
   display:flex;
-  gap:0.25rem;   /* ~8px – vừa sát nhưng không dính */
-  justify-content:flex-start;
-  max-width:1200px;
+  justify-content:center;     /* khối 2 cột nằm giữa */
+  align-items:flex-start;
+  gap:0.5rem;                 /* sát vừa, không hở */
+  max-width:1400px;           /* khai thác màn hình */
   margin:0 auto;
 }
 
+/* -------- CỘT TRÁI -------- */
 #leftCol{
-  flex: 0 0 22rem;   /* ≈ 352px nhưng scale theo zoom */
-  max-width: 100%;
+  width: var(--left-w);
+  background:#fff;
+  border:1px solid #e6ecf2;
+  border-radius:12px;
+  padding:14px;
 }
 
+/* -------- CỘT PHẢI -------- */
 #rightCol{
-  flex: 1 1 auto;
+  width: var(--right-w);          /* QUYỀN RỘNG NẰM Ở ĐÂY */
   display:flex;
   justify-content:center;
 }
+#rightCol{ outline:2px dashed red; }
+/* -------- CANVAS -------- */
+canvas{
+  width:100%;
+  height:auto;
+  aspect-ratio: 1 / 1;
+  max-width: 100%;
+  background:#fff;
+  border-radius:12px;
+}
 
-  #rightCol{ display:flex; flex-direction:column; align-items:center }
+/* =========================
+   MOBILE
+   ========================= */
+
+@media (max-width: 900px){
+  #layout{
+    grid-template-columns: 1fr;
+    max-width: 100%;
+  }
+
+  #leftCol,
+  #rightCol{
+    width:100%;
+  }
+
+  canvas{
+    max-width:100%;
+  }
+}
+
+
+
+
+#layout{
+  background:#fafafa;
+  border: 2px solid #b0bec5;                 /* viền đậm hơn */
+  border-radius: 14px;
+  box-shadow:
+    0 6px 18px rgba(0,0,0,0.12),              /* bóng chính */
+    inset 0 1px 0 rgba(255,255,255,0.9);     /* highlight trên */
+}
+
   label{ font-weight:700; font-size:.95rem }
   input[type="text"], input[type="number"]{ padding:8px; border-radius:8px; border:1px solid #cbd5e1; font-size:0.95rem; }
   .wide{ width:100% }
@@ -39,7 +99,7 @@
   #funcList{ font-size:.92rem; white-space:pre-wrap; background:#fff8e1; padding:8px; border-radius:8px; border:1px solid #ffe0b2; min-height:36px }
 canvas{
   width:100%;
-  max-width:720px;
+  max-width:580px;   /* giảm từ 720px xuống */
   aspect-ratio: 1 / 1;
   height:auto;
   border-radius:12px;
@@ -47,34 +107,28 @@ canvas{
   .hint{ font-size:.85rem; color:#546e7a }
 
 @media (max-width: 768px){
-  #layout{
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  #leftCol{
-    width: 100%;
-  }
-
-  #rightCol{
-    width: 100%;
-  }
-
- canvas{
-  width: 100%;
-  max-width: 720px;
-  aspect-ratio: 1 / 1;   /* ÉP VUÔNG */
-  height: auto;
-  border-radius: 12px;
-  background: #2e7d32;
-  box-shadow: 0 6px 18px rgba(0,0,0,.12);
-  cursor: crosshair;
-  display: block;
-}
 
 }
 
- footer {
+.form-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.form-row label{
+  white-space:nowrap;
+  font-weight:600;
+}
+
+.form-row input,
+input.wide{
+  border: 1.6px solid #90a4ae;     /* đậm hơn, xanh xám */
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 14px;
+}
+footer {
       position: fixed;
       bottom: 0;
       width: 100%;
@@ -91,7 +145,6 @@ canvas{
       -moz-user-select: none;
       -ms-user-select: none;
     }
-
 
 </style>
 
@@ -112,7 +165,7 @@ canvas{
   <h1>VẼ ĐỒ THỊ HÀM SỐ BẬC 2 VÀ TỊNH TIẾN ĐỒ THỊ</h1>
 <div style="text-align:center; font-size:1.3rem; margin:24px 0; color:#fbc02d;">
   <b><i>“Trong toán học, điều quan trọng không phải là biết đáp số, mà là hiểu con đường đi tới đáp số.”</i></b>
-<div style="text-align:right; font-size:1rem; color:#0d47a1; margin-right:100px;">
+<div style="text-align:center; font-size:1rem; color:#0d47a1;">
   <i>(George Pólya: 1887–1985)</i></div>
 
 </div>  <div id="layout">
@@ -125,8 +178,12 @@ canvas{
       <div id="info">Nhập hàm bậc 2 (vd: $y=x^2-4x+3$). Hệ thống sẽ vẽ và hiển thị toạ độ dạng phân số/nguyên.</div>
 
       <div>
-        <label>Nhập đồ thị cần tịnh tiến:</label><br>
-        <input id="extraInput" class="wide" type="text" placeholder="vd: y = -2x^2 + 3x - 1" />
+       <div class="form-row">
+  <label for="extraInput">Nhập đồ thị cần tịnh tiến:</label>
+  <input id="extraInput" class="wide" type="text"
+         placeholder="vd: y = -2x^2 + 3x - 1" />
+</div>
+
         <div class="row" style="margin-top:6px;">
           <button id="extraDrawBtn">Vẽ đồ thị</button>
           <button id="extraAddBtn" class="secondary">Thêm đồ thị</button>
@@ -367,21 +424,18 @@ function drawQuadraticWithValues(f, color, view, options = {}){
   const delta = f.b*f.b - 4*f.a*f.c;
   const xv = -f.b/(2*f.a);
   const yv = -delta/(4*f.a);
+const vertexOnOx = Math.abs(yv) < 1e-12;
 
   // nét đứt chiếu
-  ctx.setLineDash([6,6]); ctx.strokeStyle = '#ffd54f'; ctx.lineWidth = 1.6;
-  let targetY = (view.yminv <= 0 && view.ymaxv >= 0) ? 0 : (yv > 0 ? view.ymaxv : view.yminv);
-  ctx.beginPath(); ctx.moveTo(toCanvasX_world(xv, view), toCanvasY_world(yv, view));
-  ctx.lineTo(toCanvasX_world(xv, view), toCanvasY_world(targetY, view)); ctx.stroke();
-  let targetX = (view.xminv <= 0 && view.xmaxv >= 0) ? 0 : (xv > 0 ? view.xmaxv : view.xminv);
-  ctx.beginPath(); ctx.moveTo(toCanvasX_world(xv, view), toCanvasY_world(yv, view));
-  ctx.lineTo(toCanvasX_world(targetX, view), toCanvasY_world(yv, view)); ctx.stroke();
-  ctx.setLineDash([]);
 
   // vẽ điểm & nhãn tiện dụng
   function drawPointNumAt(x,y,label){
     const cx = toCanvasX_world(x, view), cy = toCanvasY_world(y, view);
     ctx.fillStyle = 'red'; ctx.beginPath(); ctx.arc(cx, cy, 3, 0, 2*Math.PI); ctx.fill();
+
+
+
+
     ctx.fillStyle = '#fff'; ctx.font = '13px Segoe UI';
     ctx.fillText(label, cx + 8, cy - 8);
   }
@@ -392,12 +446,37 @@ function drawQuadraticWithValues(f, color, view, options = {}){
   ctx.beginPath(); ctx.arc(cx, cy, 3, 0, 2*Math.PI); ctx.fill();
 
   // chiếu xuống Ox, sang Oy
-  ctx.setLineDash([6,6]); ctx.strokeStyle = '#ffd54f'; ctx.lineWidth = 1.6;
-  const Y0 = toCanvasY_world(0, view);
-  ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx, Y0); ctx.stroke();
-  const X0 = toCanvasX_world(0, view);
-  ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(X0, cy); ctx.stroke();
-  ctx.setLineDash([]);
+
+  
+// chiếu xuống Ox, sang Oy
+ctx.setLineDash([6,6]);
+ctx.strokeStyle = '#ffd54f';
+ctx.lineWidth = 1.6;
+
+const Y0 = toCanvasY_world(0, view);
+const X0 = toCanvasX_world(0, view);
+
+// ===== CHỈ VẼ ĐƯỜNG KHI ĐỈNH KHÔNG THUỘC Ox =====
+if (!vertexOnOx){
+
+  // chiếu xuống Ox
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(cx, Y0);
+  ctx.stroke();
+
+  // chiếu sang Oy
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(X0, cy);
+  ctx.stroke();
+}
+
+// ⚠️ KHÔNG XÓA DÒNG NÀY
+ctx.setLineDash([]);
+
+
+
 
   // nhãn tọa độ đỉnh trên trục
   ctx.fillStyle = '#fff'; ctx.font = '13px Segoe UI';
@@ -406,6 +485,77 @@ function drawQuadraticWithValues(f, color, view, options = {}){
 
   // giao Oy tại (0,c)
   drawPointNumAt(0, f.c, `${valToFracStr(f.c)}`);
+// ===== Điểm đối xứng của giao Oy qua trục đối xứng =====
+const xAxis = -f.b / (2 * f.a);
+const A_sym_x = 2 * xAxis;
+const A_sym_y = f.c;
+
+// tọa độ canvas của A'
+const cx2 = toCanvasX_world(A_sym_x, view);
+const cy2 = toCanvasY_world(A_sym_y, view);
+
+// vẽ điểm A'
+ctx.save();
+ctx.fillStyle = '#00e5ff';
+ctx.beginPath();
+ctx.arc(cx2, cy2, 3, 0, 2 * Math.PI);
+ctx.fill();
+
+// chiếu xuống Ox (lấy trực tiếp trục Ox)
+const yOx = toCanvasY_world(0, view);
+// ===== Dóng ngang từ A' sang trục Oy =====
+// ===== CHỈ DÓNG KHI A' KHÔNG THUỘC Ox =====
+if (Math.abs(f.c) > 1e-12){
+
+  const yOx = toCanvasY_world(0, view);
+  const xOy = toCanvasX_world(0, view);
+
+  ctx.setLineDash([6,6]);
+  ctx.strokeStyle = '#00e5ff';
+  ctx.lineWidth = 1.4;
+
+  // dóng xuống Ox
+  ctx.beginPath();
+  ctx.moveTo(cx2, cy2);
+  ctx.lineTo(cx2, yOx);
+  ctx.stroke();
+
+  // dóng sang Oy
+  ctx.beginPath();
+  ctx.moveTo(cx2, cy2);
+  ctx.lineTo(xOy, cy2);
+  ctx.stroke();
+
+  // điểm chân dóng trên Ox
+  ctx.beginPath();
+  ctx.arc(cx2, yOx, 3, 0, 2 * Math.PI);
+  ctx.fill();
+
+  ctx.setLineDash([]);
+}
+
+// ===== Điểm dóng trên trục Ox (chân chiếu) =====
+ctx.fillStyle = '#00e5ff';
+ctx.beginPath();
+ctx.arc(cx2, yOx, 3, 0, 2 * Math.PI);
+ctx.fill();
+
+ctx.setLineDash([]);
+
+
+
+
+
+
+ctx.setLineDash([6,6]);
+ctx.strokeStyle = '#00e5ff';
+ctx.lineWidth = 1.4;
+ctx.beginPath();
+ctx.moveTo(cx2, cy2);
+ctx.lineTo(cx2, yOx);
+ctx.stroke();
+
+ctx.restore();
 
   // Giao Ox:
   // - Nếu Δ < 0: không có (không vẽ).
@@ -444,6 +594,25 @@ const palette = ['#ffeb3b','#00e5ff','#ff8a65','#f48fb1','#b39ddb','#a5d6a7'];
 let nextId = 1;
 
 /* render LaTeX into #info */
+
+function drawFinalAnnotations(view, A_sym_x){
+  const cx  = toCanvasX_world(A_sym_x, view);
+  const yOx = toCanvasY_world(0, view);
+
+  ctx.save();
+  ctx.fillStyle   = '#ffffff';          // TRẮNG – NỔI TRÊN NỀN
+  ctx.font        = 'bold 14px Segoe UI';
+  ctx.textAlign   = 'center';
+  ctx.textBaseline= 'top';
+
+  // đẩy xuống dưới trục Ox cho dễ nhìn
+  ctx.fillText(valToFracStr(A_sym_x), cx+7, yOx + 5);
+
+  ctx.restore();
+}
+
+
+
 function setInfoLatex(html){
   infoBox.innerHTML = html;
   if (window.MathJax && MathJax.typesetPromise){
@@ -498,6 +667,9 @@ function updatePreview(){
   redrawAll();
 }
 
+
+
+
 function redrawAll(){
   const view = drawBoard();
   // draw added functions
@@ -517,6 +689,18 @@ function redrawAll(){
   else {
     funcListBox.textContent = functions.map((f,i)=> (f.selected? "● ":"  ") + `${i+1}. ${formatFuncString(f.a,f.b,f.c)}`).join("\n");
   }
+
+// ===== HIỂN THỊ SỐ TẠI HÌNH CHIẾU A' TRÊN Ox (NẾU KHÔNG NẰM TRÊN Ox) =====
+if (
+  previewFunc &&
+  Math.abs(previewFunc.a) > 1e-12 &&
+  Math.abs(previewFunc.c) > 1e-12   // A' KHÔNG thuộc trục hoành
+){
+  const xAxis   = -previewFunc.b / (2 * previewFunc.a);
+  const A_sym_x = 2 * xAxis;
+  drawFinalAnnotations(view, A_sym_x);
+}
+
 }
 
 /* extra draw/add */
@@ -600,6 +784,7 @@ window.addEventListener('mousemove', (ev)=>{
   const o = dragging.orig;
   const a = o.a;
   const b_new = o.b - 2*a*h;
+
   const c_new = a*h*h - o.b*h + o.c + v;
   functions[dragging.index].a = a;
   functions[dragging.index].b = b_new;
@@ -646,5 +831,3 @@ funcListBox.addEventListener('dblclick', ()=>{
 </script>
 </body>
 </html>
-
-
