@@ -8,11 +8,12 @@
   :root{ --left-w:340px; }
   body{ font-family: "Segoe UI", Tahoma, sans-serif; margin:0; padding:18px; background:linear-gradient(135deg,#e8f2ff,#fefefa); color:#263238; }
   h1{ text-align:center; margin:0 0 12px; color:#1565c0; font-weight:800 }
- #layout{
+#layout{
   display:flex;
-  gap:1rem;
-  justify-content:center;
-  align-items:stretch;
+  gap:0.25rem;   /* ~8px – vừa sát nhưng không dính */
+  justify-content:flex-start;
+  max-width:1200px;
+  margin:0 auto;
 }
 
 #leftCol{
