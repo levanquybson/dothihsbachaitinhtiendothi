@@ -8,8 +8,24 @@
   :root{ --left-w:340px; }
   body{ font-family: "Segoe UI", Tahoma, sans-serif; margin:0; padding:18px; background:linear-gradient(135deg,#e8f2ff,#fefefa); color:#263238; }
   h1{ text-align:center; margin:0 0 12px; color:#1565c0; font-weight:800 }
-  #layout{ display:flex; gap:16px; justify-content:center; align-items:flex-start }
-  #leftCol{ width:var(--left-w); background:#fff; border:1px solid #e6ecf2; border-radius:12px; padding:14px; box-shadow:0 6px 14px rgba(0,0,0,.06); display:flex; flex-direction:column; gap:10px; }
+ #layout{
+  display:flex;
+  gap:1rem;
+  justify-content:center;
+  align-items:stretch;
+}
+
+#leftCol{
+  flex: 0 0 22rem;   /* ≈ 352px nhưng scale theo zoom */
+  max-width: 100%;
+}
+
+#rightCol{
+  flex: 1 1 auto;
+  display:flex;
+  justify-content:center;
+}
+
   #rightCol{ display:flex; flex-direction:column; align-items:center }
   label{ font-weight:700; font-size:.95rem }
   input[type="text"], input[type="number"]{ padding:8px; border-radius:8px; border:1px solid #cbd5e1; font-size:0.95rem; }
@@ -20,7 +36,13 @@
   button.secondary{ background:#0288d1 } button.warn{ background:#f57c00 } button:hover{ filter:brightness(.95); }
   #info{ font-size:.95rem; line-height:1.45; background:#fafafa; padding:8px; border-radius:8px; border:1px dashed #e0e0e0 }
   #funcList{ font-size:.92rem; white-space:pre-wrap; background:#fff8e1; padding:8px; border-radius:8px; border:1px solid #ffe0b2; min-height:36px }
-  canvas{ width:720px; height:520px; border-radius:12px; background:#2e7d32; box-shadow:0 6px 18px rgba(0,0,0,.12); cursor:crosshair; display:block; }
+canvas{
+  width:100%;
+  max-width:720px;
+  aspect-ratio: 1 / 1;
+  height:auto;
+  border-radius:12px;
+}
   .hint{ font-size:.85rem; color:#546e7a }
 
 @media (max-width: 768px){
@@ -37,35 +59,26 @@
     width: 100%;
   }
 
-  canvas{
-    width: 100%;
-    height: auto;
-  }
+ canvas{
+  width: 100%;
+  max-width: 720px;
+  aspect-ratio: 1 / 1;   /* ÉP VUÔNG */
+  height: auto;
+  border-radius: 12px;
+  background: #2e7d32;
+  box-shadow: 0 6px 18px rgba(0,0,0,.12);
+  cursor: crosshair;
+  display: block;
+}
+
 }
 
 
 
-
-  
- footer {
-      position: fixed;
-      bottom: 0;
-      width: 100%;
-      text-align: center;
-      padding: 10px;
-      font-size: 14px;
-      background: #f0f0f0;
-      color: #333;
-      border-top: 1px solid #ccc;
-
-      /* chống copy / bôi đen */
-      user-select: none;
-      -webkit-user-select: none;
-      -moz-user-select: none;
-      -ms-user-select: none;
-    }
-
 </style>
+
+
+
 
 <!-- MathJax for LaTeX -->
 <script>
@@ -101,28 +114,28 @@
           <button id="extraAddBtn" class="secondary">Thêm đồ thị</button>
           <button id="clearAddedBtn" class="warn">Xóa đồ thị thêm</button>
         </div>
-        <div class="small">Bấm "thêm đồ thị" và đưa chuột lên đồ thị để kéo rê (tịnh tiến).</div>
+        <div class="small">HD: Bấm vào "thêm đồ thị" và đưa chuột lên đồ thị để kéo rê (tịnh tiến).</div>
       </div>
 
       <div>
-        <label>Danh sách đồ thị đã thêm (Đưa chuột lên đồ thị đã thêm vào để kéo rê):</label>
+        <label>Hàm số đã thêm và thay đổi sau khi tịnh tiến:</label>
         <div id="funcList">(chưa có đồ thị nào)</div>
       </div>
 
       <div>
-        <label>Giới hạn trục (đặt xong tự cập nhật):</label>
+        <label>Điều chỉnh hệ trục tọa độ:</label>
         <div class="row">
           <div>x từ <input id="xmin" type="number" value="-10" style="width:90px"> đến <input id="xmax" type="number" value="10" style="width:90px"></div>
         </div>
         <div class="row" style="margin-top:6px;">
           <div>y từ <input id="ymin" type="number" value="-10" style="width:90px"> đến <input id="ymax" type="number" value="10" style="width:90px"></div>
         </div>
-        <div class="hint">Click lên đồ thị → kéo để tịnh tiến đồ thị đã thêm; công thức cập nhật vào ô "Đồ thị khác".</div>
+       
       </div>
     </aside>
 
     <section id="rightCol">
-      <canvas id="board" width="720" height="520"></canvas>
+<canvas id="board"></canvas>
     </section>
   </div>
 
@@ -230,13 +243,12 @@ const canvas = document.getElementById('board');
 const ctx = canvas.getContext('2d');
 
 function fixCanvasResolution(){
-  const cssW = canvas.getAttribute('width') || 720;
-  const cssH = canvas.getAttribute('height') || 520;
+  const rect = canvas.getBoundingClientRect();
   const ratio = window.devicePixelRatio || 1;
-  canvas.style.width = cssW + 'px';
-  canvas.style.height = cssH + 'px';
-  canvas.width = Math.round(cssW * ratio);
-  canvas.height = Math.round(cssH * ratio);
+
+  canvas.width  = rect.width  * ratio;
+  canvas.height = rect.height * ratio;
+
   ctx.setTransform(ratio,0,0,ratio,0,0);
 }
 fixCanvasResolution();
@@ -450,8 +462,9 @@ function buildInfoLatex(a,b,c){
 
   // ghép nội dung (ẩn dòng Ox nếu rỗng)
   const lines = [
-    `$${fs}$`,
-    `Đỉnh $I\\big(${valToFracLatex(xv)},\\;${valToFracLatex(yv)}\\big)$`,
+    `Vẽ đồ thị hàm số: $${fs}$`,
+`<b><center>Bài làm</center></b> `,
+    `Tọa độ đỉnh $I\\big(${valToFracLatex(xv)},\\;${valToFracLatex(yv)}\\big)$`,
     `Trục đối xứng $x = ${valToFracLatex(-b/(2*a))}$`,
     conc,
     oxLine,
@@ -589,34 +602,5 @@ funcListBox.addEventListener('dblclick', ()=>{
   } else alert('Chọn đồ thị bằng cách click lên đồ thị trên canvas trước khi xóa (sau đó double-click danh sách để xóa).');
 });
 </script>
-  </script>
-
-<meta charset="UTF-8">
-<footer id="copyright"></footer>
-
-<script>
-  // Base64 đúng (chữ Quý)
-  const b64Copyright = "TMOqIFbEg24gUXXDvSwgVEhQVCBCw6xuaCBTxqFuLCBRdeG6o25nIE5nw6NpK0dQVA==";
-
-  const bytes = Uint8Array.from(atob(b64Copyright), c => c.charCodeAt(0));
-  const text  = new TextDecoder("utf-8").decode(bytes);
-
-  // Kiểm tra nhanh trên console: phải in đúng "© 2025 Lê Văn Quý+GPT. All rights reserved."
-  console.log(text);
-
-  document.getElementById("copyright").textContent = text;
-
-  // (tuỳ chọn) chặn chuột phải & Ctrl+C như bạn đã làm
-  document.addEventListener("contextmenu", e => e.preventDefault());
-  document.addEventListener("keydown", e => {
-    if (e.ctrlKey && e.key.toLowerCase() === "c") {
-      e.preventDefault();
-      alert("!");
-    }
-  });
-</script>
-
 </body>
 </html>
-
-
