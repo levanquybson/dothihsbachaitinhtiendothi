@@ -120,6 +120,26 @@ input.wide{
   padding: 8px 10px;
   font-size: 14px;
 }
+/* =========================
+   MOBILE – XOAY DỌC
+   ========================= */
+@media (max-width: 900px) and (orientation: portrait){
+
+  #layout{
+    flex-direction: column;   /* 1 cột */
+    align-items: center;
+  }
+
+  #leftCol,
+  #rightCol{
+    width: 100%;
+    max-width: 600px;         /* giữ gọn, không tràn */
+  }
+
+  #rightCol{
+    margin-top: 12px;
+  }
+}
 
 footer {
       position: fixed;
