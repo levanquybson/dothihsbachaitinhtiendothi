@@ -20,6 +20,13 @@
   --right-w: 900px;    /* cột canvas – MẤU CHỐT */
   --gap: 14px;
 }
+canvas{
+  width:100%;
+  max-width:580px;   /* giảm từ 720px xuống */
+  aspect-ratio: 1 / 1;
+  height:auto;
+  border-radius:12px;
+}
 
 #layout{
   display:flex;
@@ -47,14 +54,6 @@
 }
 #rightCol{ outline:2px dashed red; }
 /* -------- CANVAS -------- */
-canvas{
-  width:100%;
-  height:auto;
-  aspect-ratio: 1 / 1;
-  max-width: 100%;
-  background:#fff;
-  border-radius:12px;
-}
 
 /* =========================
    MOBILE
@@ -97,13 +96,6 @@ canvas{
   button.secondary{ background:#0288d1 } button.warn{ background:#f57c00 } button:hover{ filter:brightness(.95); }
   #info{ font-size:.95rem; line-height:1.45; background:#fafafa; padding:8px; border-radius:8px; border:1px dashed #e0e0e0 }
   #funcList{ font-size:.92rem; white-space:pre-wrap; background:#fff8e1; padding:8px; border-radius:8px; border:1px solid #ffe0b2; min-height:36px }
-canvas{
-  width:100%;
-  max-width:580px;   /* giảm từ 720px xuống */
-  aspect-ratio: 1 / 1;
-  height:auto;
-  border-radius:12px;
-}
   .hint{ font-size:.85rem; color:#546e7a }
 
 @media (max-width: 768px){
@@ -128,6 +120,7 @@ input.wide{
   padding: 8px 10px;
   font-size: 14px;
 }
+
 footer {
       position: fixed;
       bottom: 0;
@@ -145,7 +138,6 @@ footer {
       -moz-user-select: none;
       -ms-user-select: none;
     }
-
 </style>
 
 
@@ -805,7 +797,7 @@ funcListBox.addEventListener('dblclick', ()=>{
   } else alert('Chọn đồ thị bằng cách click lên đồ thị trên canvas trước khi xóa (sau đó double-click danh sách để xóa).');
 });
 </script>
-  <meta charset="UTF-8">
+<meta charset="UTF-8">
 <footer id="copyright"></footer>
 
 <script>
